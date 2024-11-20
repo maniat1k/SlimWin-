@@ -15,17 +15,14 @@ Instalación
 Clona este repositorio en tu máquina local:
 
 bash
-Copiar código
 git clone https://github.com/tu_usuario/SlimWin.git
 Navega al directorio del proyecto:
 
 bash
-Copiar código
 cd SlimWin
 Ejecuta el script en PowerShell como Administrador:
 
 powershell
-Copiar código
 .\slimwin.ps1
 Cómo Usar
 Al ejecutar el script, aparecerá una interfaz gráfica.

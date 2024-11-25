@@ -14,8 +14,9 @@ $label.Size = New-Object System.Drawing.Size(350, 20)
 $label.Location = New-Object System.Drawing.Point(20, 20)
 $form.Controls.Add($label)
 
-# Variables de control para el botón de cancelar
+# Variables de control
 $cancelRequested = $false
+$taskRunning = $false
 
 # Botón de cancelar
 $buttonCancel = New-Object System.Windows.Forms.Button
@@ -24,11 +25,12 @@ $buttonCancel.Location = New-Object System.Drawing.Point(270, 400)
 $buttonCancel.Size = New-Object System.Drawing.Size(100, 30)
 $form.Controls.Add($buttonCancel)
 
-# Función para manejar la cancelación
-$buttonCancel.Add_Click({
-    $cancelRequested = $true
-    [System.Windows.Forms.MessageBox]::Show("Proceso cancelado. Saldrá al terminar la tarea en curso.", "Cancelado")
-})
+# Botón de salir
+$buttonExit = New-Object System.Windows.Forms.Button
+$buttonExit.Text = "Salir"
+$buttonExit.Location = New-Object System.Drawing.Point(150, 400)
+$buttonExit.Size = New-Object System.Drawing.Size(100, 30)
+$form.Controls.Add($buttonExit)
 
 # Checkbox para cada acción
 $checkboxBackup = New-Object System.Windows.Forms.CheckBox
@@ -71,6 +73,7 @@ $form.Controls.Add($buttonExecute)
 # Función para crear copia de seguridad
 function Create-Backup {
     if ($cancelRequested) { return }
+    $taskRunning = $true
     $backupPath = "C:\Backup_Windows"
     if (-not (Test-Path $backupPath)) {
         New-Item -ItemType Directory -Path $backupPath -Force
@@ -78,12 +81,14 @@ function Create-Backup {
     $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
     $backupFile = Join-Path $backupPath "Backup_$timestamp.zip"
     Compress-Archive -Path "$env:USERPROFILE\Documents", "$env:USERPROFILE\Desktop", "$env:USERPROFILE\Downloads" -DestinationPath $backupFile
+    $taskRunning = $false
     [System.Windows.Forms.MessageBox]::Show("Copia de seguridad completada: $backupFile", "Información")
 }
 
 # Función para eliminar aplicaciones preinstaladas
 function Remove-Bloatware {
     if ($cancelRequested) { return }
+    $taskRunning = $true
     $appsToRemove = @(
         "Microsoft.3DBuilder",
         "Microsoft.XboxGameCallableUI",
@@ -97,12 +102,14 @@ function Remove-Bloatware {
         if ($cancelRequested) { return }
         Get-AppxPackage -Name $app | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
     }
+    $taskRunning = $false
     [System.Windows.Forms.MessageBox]::Show("Aplicaciones preinstaladas eliminadas", "Información")
 }
 
 # Función para deshabilitar servicios
 function Disable-Services {
     if ($cancelRequested) { return }
+    $taskRunning = $true
     $servicesToDisable = @(
         "DiagTrack", "dmwappushservice", "XboxGipSvc", "xbgm", "XblAuthManager", "XblGameSave"
     )
@@ -111,26 +118,49 @@ function Disable-Services {
         Stop-Service -Name $service -Force -ErrorAction SilentlyContinue
         Set-Service -Name $service -StartupType Disabled
     }
+    $taskRunning = $false
     [System.Windows.Forms.MessageBox]::Show("Servicios innecesarios deshabilitados", "Información")
 }
 
 # Función para configurar privacidad
 function Configure-Privacy {
     if ($cancelRequested) { return }
+    $taskRunning = $true
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" -Name "AllowTelemetry" -Value 0
     Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "CortanaConsent" -Value 0
+    $taskRunning = $false
     [System.Windows.Forms.MessageBox]::Show("Ajustes de privacidad configurados", "Información")
 }
 
 # Función para limpiar almacenamiento
 function Clean-Storage {
     if ($cancelRequested) { return }
+    $taskRunning = $true
     Start-Process -FilePath "cleanmgr.exe" -ArgumentList "/sagerun:1" -NoNewWindow -Wait
+    $taskRunning = $false
     [System.Windows.Forms.MessageBox]::Show("Espacio en disco liberado", "Información")
 }
 
+# Acción al presionar "Cancelar"
+$buttonCancel.Add_Click({
+    if ($taskRunning) {
+        $cancelRequested = $true
+        [System.Windows.Forms.MessageBox]::Show("Proceso cancelado. Saldrá al terminar la tarea en curso.", "Cancelado")
+    } else {
+        [System.Windows.Forms.MessageBox]::Show("No hay procesos en ejecución. Cancelando...", "Cancelado")
+        $form.Close()
+    }
+})
+
+# Acción al presionar "Salir"
+$buttonExit.Add_Click({
+    $cancelRequested = $true
+    $form.Close()
+})
+
 # Acción al presionar "Ejecutar"
 $buttonExecute.Add_Click({
+    $taskRunning = $true
     if ($checkboxBackup.Checked) { Create-Backup }
     if ($checkboxBloatware.Checked) { Remove-Bloatware }
     if ($checkboxServices.Checked) { Disable-Services }
@@ -140,6 +170,7 @@ $buttonExecute.Add_Click({
     if (-not $cancelRequested) {
         [System.Windows.Forms.MessageBox]::Show("Script completado. Reinicia tu sistema.", "Finalizado")
     }
+    $taskRunning = $false
     $form.Close()
 })
 

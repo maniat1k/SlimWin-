@@ -70,7 +70,7 @@ $buttonExecute.Location = New-Object System.Drawing.Point(20, 400)
 $buttonExecute.Size = New-Object System.Drawing.Size(100, 30)
 $form.Controls.Add($buttonExecute)
 
-# Función para crear copia de seguridad
+# Función para crear copia de seguridad en bloques más pequeños
 function Create-Backup {
     if ($cancelRequested) { return }
     $taskRunning = $true
@@ -79,10 +79,26 @@ function Create-Backup {
         New-Item -ItemType Directory -Path $backupPath -Force
     }
     $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-    $backupFile = Join-Path $backupPath "Backup_$timestamp.zip"
-    Compress-Archive -Path "$env:USERPROFILE\Documents", "$env:USERPROFILE\Desktop", "$env:USERPROFILE\Downloads" -DestinationPath $backupFile
+
+    # Lista de carpetas a respaldar
+    $foldersToBackup = @("$env:USERPROFILE\Documents", "$env:USERPROFILE\Desktop", "$env:USERPROFILE\Downloads")
+
+    Write-Output "Comenzando copia de seguridad en bloques..."
+    foreach ($folder in $foldersToBackup) {
+        if ($cancelRequested) { return }
+        $folderName = Split-Path -Leaf $folder
+        $partialZip = Join-Path $backupPath "$folderName_$timestamp.zip"
+        try {
+            Compress-Archive -Path $folder -DestinationPath $partialZip -Force
+            Write-Output "Respaldado: $folder -> $partialZip"
+        } catch {
+            Write-Output "Error al respaldar $folder: $_"
+        }
+    }
+
     $taskRunning = $false
-    [System.Windows.Forms.MessageBox]::Show("Copia de seguridad completada: $backupFile", "Información")
+    Write-Output "Copia de seguridad completada."
+    [System.Windows.Forms.MessageBox]::Show("Copia de seguridad completada en $backupPath", "Información")
 }
 
 # Función para eliminar aplicaciones preinstaladas

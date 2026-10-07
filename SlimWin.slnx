@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SlimWin.Core/SlimWin.Core.csproj" />
+  <Project Path="SlimWin.Desktop/SlimWin.Desktop.csproj" />
+</Solution>

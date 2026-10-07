@@ -1,0 +1,128 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SlimWin.Desktop.ViewModels"
+        xmlns:core="using:SlimWin.Core"
+        xmlns:conv="using:SlimWin.Core.Converters"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="550"
+        x:Class="SlimWin.Desktop.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="SlimWin — Limpieza Windows 11"
+        Width="700" Height="550"
+        MinWidth="600" MinHeight="500"
+        WindowStartupLocation="CenterScreen">
+
+    <Design.DataContext>
+        <vm:MainViewModel />
+    </Design.DataContext>
+
+    <Window.Styles>
+        <Style Selector="CheckBox">
+            <Setter Property="Margin" Value="0,4" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.description">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Margin" Value="24,0,12,8" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBlock.result">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Margin" Value="24,2,12,2" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="Border.actionCard">
+            <Setter Property="Margin" Value="8,4" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource CardBackground}" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="12">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="SlimWin — Limpieza y configuración Windows 11"
+                       FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="Selecciona las acciones a ejecutar. Todas vienen desmarcadas por defecto."
+                       FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       TextWrapping="Wrap" Margin="0,4,0,0" />
+        </StackPanel>
+
+        <!-- Actions List -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Actions}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="core:ActionItem">
+                        <Border Classes="actionCard">
+                            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto">
+                                <!-- Checkbox -->
+                                <CheckBox Grid.Row="0" Grid.Column="0" Grid.RowSpan="3"
+                                          IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                          VerticalAlignment="Center"
+                                          ToolTip.Tip="{Binding Tooltip}" />
+
+                                <!-- Name + Description -->
+                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                           Text="{Binding Name}"
+                                           FontSize="14" FontWeight="Medium"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                           Text="{Binding Description}"
+                                           Classes="description" />
+
+                                <!-- Status Badge -->
+                                <StackPanel Grid.Row="0" Grid.Column="2" Grid.RowSpan="3"
+                                            Orientation="Horizontal" VerticalAlignment="Center"
+                                            Margin="12,0,0,0" Spacing="8">
+                                    <Border Width="12" Height="12" CornerRadius="6"
+                                            VerticalAlignment="Center"
+                                            Background="{Binding Status, Converter={StaticResource StatusToBrushConverter}}"
+                                            ToolTip.Tip="{Binding Status}" />
+                                    <TextBlock Text="{Binding Status}"
+                                               FontSize="11" FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               Foreground="{Binding Status, Converter={StaticResource StatusToBrushConverter}}" />
+                                </StackPanel>
+
+                                <!-- Result Message -->
+                                <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                           Text="{Binding ResultMessage}"
+                                           Classes="result"
+                                           Foreground="{Binding Status, Converter={StaticResource ResultToBrushConverter}}"
+                                           IsVisible="{Binding ResultMessage, Converter={x:Static conv:StringToBoolConverter.Instance}}" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Progress Bar -->
+        <StackPanel Grid.Row="2" Margin="0,12,0,0" IsVisible="{Binding IsExecuting}">
+            <ProgressBar Value="{Binding ProgressValue}"
+                         IsIndeterminate="{Binding IsIndeterminate}"
+                         Height="8" Minimum="0" Maximum="100"
+                         ShowProgressText="False" />
+            <TextBlock Text="{Binding ProgressText}"
+                       FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       Margin="0,4,0,0" HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <!-- Bottom Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Margin="0,12,0,0" Spacing="8">
+            <Button Content="Cancelar" Command="{Binding CancelCommand}"
+                    IsVisible="{Binding IsExecuting}"
+                    Classes="secondary" />
+            <Button Content="Ejecutar seleccionadas" Command="{Binding ExecuteCommand}"
+                    IsVisible="{Binding !IsExecuting}"
+                    Classes="primary" MinWidth="180" />
+        </StackPanel>
+    </Grid>
+</Window>

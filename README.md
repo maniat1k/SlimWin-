@@ -1,54 +1,97 @@
 # SlimWin
 
-> **En desarrollo — proyecto sin terminar.** La versión actual es un prototipo y no una versión estable ni validada para uso general. **Úsalo bajo tu propio riesgo.** Puede eliminar aplicaciones, deshabilitar servicios y modificar el registro de Windows. No se garantiza compatibilidad con todas las versiones o configuraciones de Windows 11.
+> **En desarrollo — proyecto sin terminar. Úsalo bajo tu propio riesgo.** No hay una versión estable ni compatibilidad validada para uso general.
 
-SlimWin es un proyecto para administrar tareas de limpieza y configuración de Windows mediante una interfaz gráfica. El script actual incluye una ventana básica en PowerShell/Windows Forms; es el punto de partida para una GUI utilizable.
+SlimWin es un proyecto independiente para administrar tareas de limpieza y configuración de Windows 11 mediante una interfaz gráfica. La nueva aplicación utiliza **Avalonia, C# y .NET 10**. La migración de las operaciones del prototipo PowerShell está pendiente.
 
-## Estado actual y limitaciones
+## Estado actual — 7 de octubre de 2026
 
-- Todas las acciones aparecen seleccionadas por defecto. Revisa y desmarca las que no quieras aplicar antes de ejecutar.
-- La copia de seguridad comprime Documents, Desktop y Downloads del perfil de usuario. **No es una imagen del sistema ni un mecanismo de rollback** de aplicaciones, servicios o registro.
-- El manejo de errores y los mensajes de resultado necesitan revisión: un mensaje de finalización no garantiza que todas las operaciones hayan funcionado.
-- La cancelación y la respuesta de la interfaz durante tareas largas todavía no están garantizadas.
-- No hay una matriz de compatibilidad validada ni una versión estable publicada.
+La solución `SlimWin.slnx` contiene:
 
-Para evaluar el prototipo, utiliza una máquina virtual o un entorno de pruebas con un respaldo independiente que permita recuperar el sistema.
+| Componente | Propósito |
+|---|---|
+| `SlimWin.Core` | Modelos de acciones, contrato del servicio y ejecución simulada |
+| `SlimWin.Desktop` | Interfaz Avalonia con MVVM |
+| `slimwin.ps1` | Prototipo histórico PowerShell/Windows Forms, conservado como referencia |
 
-## Funciones del prototipo
+**La aplicación Avalonia ejecuta acciones simuladas: no realiza limpieza, backups ni cambios reales en Windows.** Los resultados simulados no demuestran que las operaciones reales funcionen.
 
-- Copia de carpetas de usuario.
-- Eliminación de un conjunto de aplicaciones preinstaladas.
-- Desactivación de servicios definidos en el script.
-- Modificación de ajustes de privacidad en el registro.
-- Invocación de la herramienta nativa de limpieza de disco.
+Avance disponible:
 
-Estas funciones describen el código existente; no implican mejoras de rendimiento o privacidad verificadas.
+- Cinco acciones presentadas con opciones desmarcadas por defecto.
+- Estructura para progreso, cancelación y resultados por acción.
+- Compilación local reportada sin errores ni advertencias.
+- Apertura de la ventana comprobada manualmente en Windows.
 
-## Meta del proyecto
+Pendientes de validación:
 
-**Lograr una primera GUI utilizable para Windows 11**, con:
+- Recorrido completo de selección, ejecución simulada, cancelación y reejecución.
+- **Confirmación real:** `ShowConfirmationDialogAsync` devuelve `true` automáticamente; todavía no muestra un diálogo ni espera una decisión del usuario.
+- Ajustes de distribución visual, estados en español y aviso visible de modo simulación.
+- Tests automatizados y CI en GitHub Actions.
+- Migración y pruebas de las operaciones reales, permisos y recuperación.
 
-- Opciones claras, explicación de su alcance y acciones de modificación desmarcadas por defecto.
-- Vista previa y confirmación de los cambios seleccionados.
-- Verificación de permisos y requisitos antes de ejecutar.
-- Interfaz que responda durante la ejecución, progreso visible y cancelación controlada.
-- Registro de operaciones y resultados reales por acción.
-- Recuperación del estado anterior de servicios y registro cuando corresponda, y límites explícitos para acciones que no puedan revertirse.
-- Pruebas reproducibles en Windows 11 y documentación de instalación, uso y compatibilidad.
+## Ejecutar la GUI simulada
 
-La elección tecnológica de la GUI y el alcance final del MVP se definirán durante el diseño. SlimWin continúa como proyecto independiente.
+Requisitos para desarrollo: Windows 11, Git y **SDK de .NET 10**. La simulación no requiere elevar permisos para modificar el sistema.
 
-## Evaluar el prototipo
-
-Requiere Windows y permisos de administrador para las operaciones que modifican el sistema. El código utiliza PowerShell y Windows Forms; las versiones compatibles aún deben validarse.
+Desde PowerShell:
 
 ```powershell
 git clone https://github.com/maniat1k/SlimWin-.git
 cd SlimWin-
-.\slimwin.ps1
+dotnet build SlimWin.slnx
+dotnet run --project SlimWin.Desktop
 ```
 
-Lee las limitaciones anteriores antes de ejecutarlo. La GUI actual no debe interpretarse como una versión terminada.
+Si ya tienes el repositorio, ejecuta los dos últimos comandos desde su raíz.
+
+No hay instalador publicado. Actualmente se ejecuta desde el código fuente.
+
+## Acciones previstas
+
+| Acción | GUI Avalonia actual |
+|---|---|
+| Copiar carpetas de usuario | Simulada |
+| Eliminar aplicaciones preinstaladas | Simulada |
+| Deshabilitar servicios | Simulada |
+| Configurar ajustes de privacidad | Simulada |
+| Liberar espacio en disco | Simulada |
+
+La selección final de aplicaciones, servicios y ajustes deberá explicarse y validarse antes de habilitar operaciones reales. No se prometen mejoras de rendimiento o privacidad sin evidencia.
+
+## Meta y próximos pasos
+
+**Meta provisional: una primera GUI utilizable el 30/10/2026**, revisable según el resultado de las pruebas.
+
+1. Completar la confirmación explícita y el recorrido de la GUI simulada.
+2. Mejorar legibilidad, progreso, estados y presentación de resultados.
+3. Incorporar tests útiles y build/tests en GitHub Actions.
+4. Integrar operaciones reales de forma incremental y probarlas en una VM Windows 11.
+5. Registrar estado anterior y recuperación para servicios/registro, y explicar los límites de reversibilidad de cada acción.
+6. Documentar requisitos, versiones probadas y uso.
+
+El instalador firmado y una release candidate son objetivos posteriores. La firma de código no garantiza ausencia de advertencias de SmartScreen. No se declarará una versión estable sin evidencia de validación.
+
+## Prototipo histórico PowerShell
+
+`slimwin.ps1` **sí contiene operaciones reales**: puede eliminar aplicaciones, deshabilitar servicios y modificar el registro. Se conserva como referencia de la migración y no es el punto de entrada de la nueva GUI.
+
+Sus limitaciones incluyen:
+
+- Todas las acciones seleccionadas por defecto.
+- Backup limitado a Documents, Desktop y Downloads; **no es una imagen del sistema ni un rollback** de aplicaciones, servicios o registro.
+- Manejo de errores y mensajes de éxito que requieren revisión.
+- Cancelación y respuesta de la interfaz no garantizadas.
+- Compatibilidad no validada.
+
+Su evaluación debe hacerse en un entorno de pruebas con recuperación independiente del sistema.
+
+## Trabajo con agentes y Git
+
+Lee `AGENTS.md` y `CONTEXT.md` antes de comenzar una tarea relevante. Contrasta el contexto con el código y actualiza el punto de continuación cuando avance el proyecto.
+
+`bin/`, `obj/` y la configuración local `.kilo/` están excluidos de Git. No almacenes secretos en el repositorio.
 
 ## Licencia
 
